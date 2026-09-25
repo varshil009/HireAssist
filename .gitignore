@@ -1,0 +1,9 @@
+data/hireassist.db
+*.db
+!data/*.pdf
+.env
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/

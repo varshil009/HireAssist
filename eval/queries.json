@@ -1,0 +1,125 @@
+[
+  {
+    "id": "q01",
+    "natural_language": "Find Priya Sharma",
+    "expected_candidate_ids": [1],
+    "reference_sql": "SELECT c.* FROM candidates c WHERE c.name LIKE '%Priya Sharma%' LIMIT 500"
+  },
+  {
+    "id": "q02",
+    "natural_language": "Who is in screening right now?",
+    "expected_candidate_ids": [1, 2, 3, 4, 5, 13, 17, 22],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = 1 LIMIT 500"
+  },
+  {
+    "id": "q03",
+    "natural_language": "Who has been stuck in screening for more than a week?",
+    "expected_candidate_ids": [2, 3, 4],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = 1 AND c.entered_screening_at <= '2025-09-17T12:00:00+00:00' LIMIT 500"
+  },
+  {
+    "id": "q04",
+    "natural_language": "Who moved to screening since Monday 22 September 2025?",
+    "expected_candidate_ids": [5, 13, 17, 22],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.entered_screening_at >= '2025-09-22T00:00:00+00:00' LIMIT 500"
+  },
+  {
+    "id": "q05",
+    "natural_language": "Who reached the offer stage but did not get hired?",
+    "expected_candidate_ids": [6, 7, 11, 15, 18, 20, 23],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.offered_flag = 1 AND c.hired_flag = 0 LIMIT 500"
+  },
+  {
+    "id": "q06",
+    "natural_language": "Everyone except rejected candidates",
+    "expected_candidate_ids": [1, 2, 3, 4, 5, 6, 8, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage != -1 LIMIT 500"
+  },
+  {
+    "id": "q07",
+    "natural_language": "List candidates applying for POS-102 Product Designer",
+    "expected_candidate_ids": [3, 7, 10, 13, 16, 19, 22],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c JOIN positions p ON p.id = c.position_id WHERE p.position_code = 'POS-102' LIMIT 500"
+  },
+  {
+    "id": "q08",
+    "natural_language": "Show all hired candidates",
+    "expected_candidate_ids": [8, 19],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = 3 LIMIT 500"
+  },
+  {
+    "id": "q09",
+    "natural_language": "Who is still in applied stage?",
+    "expected_candidate_ids": [12, 14, 16, 21],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = 0 LIMIT 500"
+  },
+  {
+    "id": "q10",
+    "natural_language": "Rejected candidates who had received an offer",
+    "expected_candidate_ids": [7, 20],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = -1 AND c.offered_flag = 1 LIMIT 500"
+  },
+  {
+    "id": "q11",
+    "natural_language": "Candidates currently at offer stage",
+    "expected_candidate_ids": [6, 11, 15, 18, 23],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = 2 LIMIT 500"
+  },
+  {
+    "id": "q12",
+    "natural_language": "Find Marcus Lee",
+    "expected_candidate_ids": [6],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.name LIKE '%Marcus Lee%' LIMIT 500"
+  },
+  {
+    "id": "q13",
+    "natural_language": "Data Analyst opening candidates in screening",
+    "expected_candidate_ids": [4, 17],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c JOIN positions p ON p.id = c.position_id WHERE p.position_code = 'POS-103' AND c.current_stage = 1 LIMIT 500"
+  },
+  {
+    "id": "q14",
+    "natural_language": "Senior Backend Engineer candidates not rejected",
+    "expected_candidate_ids": [1, 2, 5, 6, 12, 15, 18, 21],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c JOIN positions p ON p.id = c.position_id WHERE p.position_code = 'POS-101' AND c.current_stage != -1 LIMIT 500"
+  },
+  {
+    "id": "q15",
+    "natural_language": "Who entered offered stage since 22 September 2025?",
+    "expected_candidate_ids": [11],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.entered_offered_at >= '2025-09-22T00:00:00+00:00' LIMIT 500"
+  },
+  {
+    "id": "q16",
+    "natural_language": "Screening candidates for POS-101 with name containing Amit",
+    "expected_candidate_ids": [2],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c JOIN positions p ON p.id = c.position_id WHERE p.position_code = 'POS-101' AND c.current_stage = 1 AND c.name LIKE '%Amit%' LIMIT 500"
+  },
+  {
+    "id": "q17",
+    "natural_language": "How many candidates are in each stage? Show stage and count.",
+    "expected_candidate_ids": [],
+    "reference_sql": "SELECT current_stage, COUNT(*) AS cnt FROM candidates GROUP BY current_stage LIMIT 500",
+    "notes": "Aggregate query; eval compares row count only when expected ids empty"
+  },
+  {
+    "id": "q18",
+    "natural_language": "Candidates rejected while still in applied",
+    "expected_candidate_ids": [9],
+    "reference_sql": "SELECT c.id, c.name FROM candidates c JOIN stage_events e ON e.candidate_id = c.id WHERE c.current_stage = -1 AND e.to_stage = -1 AND e.from_stage = 0 LIMIT 500"
+  },
+  {
+    "id": "q19",
+    "natural_language": "purple elephants dancing on mars",
+    "expected_candidate_ids": [],
+    "expected_message_substring": "doesn't map",
+    "reference_sql": null,
+    "notes": "Nonsense query; expect explanatory message, empty rows"
+  },
+  {
+    "id": "q20",
+    "natural_language": "Find Noah Kim and show if hired",
+    "expected_candidate_ids": [8],
+    "reference_sql": "SELECT c.id, c.name, c.hired_flag FROM candidates c WHERE c.name LIKE '%Noah Kim%' LIMIT 500"
+  }
+]
