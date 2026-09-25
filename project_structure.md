@@ -122,6 +122,6 @@ Copy [backend/.env.example](backend/.env.example) to `backend/.env` (settings ar
 backend\.venv\Scripts\python -m backend.scripts.seed
 ```
 
-Uses fixed anchor date **2025-09-24 UTC** and **last Monday 2025-09-22** so time-based eval queries stay stable.
+Uses reference anchor **2026-09-25 UTC** (Monday of that week: **2026-09-22**). Time-based eval/reference SQL uses SQLite `datetime('now')` and should be run when system date aligns with the mock timeline.
 
 Requires **`data/VARSHIL_PRAJAPATI_CV25.pdf`** (or update `DEFAULT_RESUME_FILE` in `seed.py`). The same PDF bytes are stored in `resumes.file_blob` for **every** seeded candidate.

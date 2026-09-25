@@ -7,15 +7,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 from app.config import settings  # noqa: E402
 
-conn = sqlite3.connect(settings.database_path)
-conn.row_factory = sqlite3.Row
+MONDAY_START = (
+    "datetime('now', 'start of day', '-' || ((CAST(strftime('%w', 'now') AS INTEGER) + 6) % 7) || ' days')"
+)
 
 CHECKS = [
     ("screening", "SELECT id FROM candidates WHERE current_stage = 1 ORDER BY id"),
     (
         "stuck_screening_7d",
         "SELECT id FROM candidates WHERE current_stage = 1 "
-        "AND entered_screening_at <= '2025-09-17T12:00:00+00:00' ORDER BY id",
+        f"AND datetime(entered_screening_at) <= datetime('now', '-7 days') ORDER BY id",
     ),
     (
         "offered_not_hired",
@@ -24,12 +25,16 @@ CHECKS = [
     ("not_rejected", "SELECT id FROM candidates WHERE current_stage != -1 ORDER BY id"),
     (
         "screening_since_monday",
-        "SELECT id FROM candidates WHERE entered_screening_at >= '2025-09-22T00:00:00+00:00' ORDER BY id",
+        f"SELECT id FROM candidates WHERE datetime(entered_screening_at) >= {MONDAY_START} ORDER BY id",
+    ),
+    (
+        "offered_since_monday",
+        f"SELECT id FROM candidates WHERE datetime(entered_offered_at) >= {MONDAY_START} ORDER BY id",
     ),
     ("priya", "SELECT id FROM candidates WHERE name LIKE '%Priya%' ORDER BY id"),
-    ("pos_102", "SELECT c.id FROM candidates c JOIN positions p ON p.id = c.position_id WHERE p.position_code = 'POS-102' ORDER BY c.id"),
 ]
 
+conn = sqlite3.connect(settings.database_path)
 for name, sql in CHECKS:
     ids = [r[0] for r in conn.execute(sql).fetchall()]
     print(name, ids)

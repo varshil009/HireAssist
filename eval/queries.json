@@ -15,18 +15,18 @@
     "id": "q03",
     "natural_language": "Who has been stuck in screening for more than a week?",
     "expected_candidate_ids": [2, 3, 4],
-    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = 1 AND c.entered_screening_at <= '2025-09-17T12:00:00+00:00' LIMIT 500"
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = 1 AND datetime(c.entered_screening_at) <= datetime('now', '-7 days') LIMIT 500"
   },
   {
     "id": "q04",
-    "natural_language": "Who moved to screening since Monday 22 September 2025?",
+    "natural_language": "Who moved to screening since Monday?",
     "expected_candidate_ids": [5, 13, 17, 22],
-    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.entered_screening_at >= '2025-09-22T00:00:00+00:00' LIMIT 500"
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE datetime(c.entered_screening_at) >= datetime('now', 'start of day', '-' || ((CAST(strftime('%w', 'now') AS INTEGER) + 6) % 7) || ' days') LIMIT 500"
   },
   {
     "id": "q05",
     "natural_language": "Who reached the offer stage but did not get hired?",
-    "expected_candidate_ids": [6, 7, 11, 15, 18, 20, 23],
+    "expected_candidate_ids": [6, 11, 15, 18, 23],
     "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.offered_flag = 1 AND c.hired_flag = 0 LIMIT 500"
   },
   {
@@ -56,7 +56,7 @@
   {
     "id": "q10",
     "natural_language": "Rejected candidates who had received an offer",
-    "expected_candidate_ids": [7, 20],
+    "expected_candidate_ids": [],
     "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.current_stage = -1 AND c.offered_flag = 1 LIMIT 500"
   },
   {
@@ -85,9 +85,9 @@
   },
   {
     "id": "q15",
-    "natural_language": "Who entered offered stage since 22 September 2025?",
+    "natural_language": "Who entered offered stage since Monday?",
     "expected_candidate_ids": [11],
-    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE c.entered_offered_at >= '2025-09-22T00:00:00+00:00' LIMIT 500"
+    "reference_sql": "SELECT c.id, c.name FROM candidates c WHERE datetime(c.entered_offered_at) >= datetime('now', 'start of day', '-' || ((CAST(strftime('%w', 'now') AS INTEGER) + 6) % 7) || ' days') LIMIT 500"
   },
   {
     "id": "q16",

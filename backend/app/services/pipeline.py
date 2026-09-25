@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from ..db.database import get_connection
 from ..models.schemas import STAGE_LABELS, CandidateOut, StageEventOut
+from ..utils.datetime_fmt import format_display_date, maybe_format_display_date
 
 TERMINAL_STAGES = {-1, 3}
 NEXT_STAGE = {0: 1, 1: 2, 2: 3}
@@ -54,13 +55,15 @@ def row_to_candidate(row) -> CandidateOut:
         position_title=d.get("position_title"),
         current_stage=stage,
         stage_label=STAGE_LABELS.get(stage, str(stage)),
-        rejected_at=d.get("rejected_at"),
+        rejected_at=format_display_date(d.get("rejected_at")) if d.get("rejected_at") else None,
         offered_flag=d["offered_flag"],
         hired_flag=d["hired_flag"],
-        entered_applied_at=d["entered_applied_at"],
-        entered_screening_at=d.get("entered_screening_at"),
-        entered_offered_at=d.get("entered_offered_at"),
-        entered_hired_at=d.get("entered_hired_at"),
+        entered_applied_at=format_display_date(d["entered_applied_at"]),
+        entered_screening_at=format_display_date(d["entered_screening_at"])
+        if d.get("entered_screening_at")
+        else None,
+        entered_offered_at=format_display_date(d["entered_offered_at"]) if d.get("entered_offered_at") else None,
+        entered_hired_at=format_display_date(d["entered_hired_at"]) if d.get("entered_hired_at") else None,
         days_in_current_stage=_days_in_stage(entered) if stage >= 0 else None,
     )
 
@@ -142,7 +145,7 @@ def get_timeline(candidate_id: int) -> list[StageEventOut]:
                 to_stage=ts,
                 from_label="Start" if fs == -99 else STAGE_LABELS.get(fs, str(fs)),
                 to_label=STAGE_LABELS.get(ts, str(ts)),
-                occurred_at=row["occurred_at"],
+                occurred_at=format_display_date(row["occurred_at"]),
             )
         )
     return out

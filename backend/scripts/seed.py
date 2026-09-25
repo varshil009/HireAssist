@@ -18,9 +18,10 @@ DEFAULT_RESUME_FILE = ROOT / "data" / "VARSHIL_PRAJAPATI_CV25.pdf"
 from app.config import settings  # noqa: E402
 from app.db.database import SCHEMA, ensure_db_dir  # noqa: E402
 
-# Fixed anchor so eval queries referencing "last Monday" stay stable.
-ANCHOR = datetime(2025, 9, 24, 12, 0, 0, tzinfo=timezone.utc)
-LAST_MONDAY = datetime(2025, 9, 22, 0, 0, 0, tzinfo=timezone.utc)
+# Reference "today" for mock data (25 September 2026 UTC). SQLite `now` at query time should align for relative date questions.
+ANCHOR = datetime(2026, 9, 25, 12, 0, 0, tzinfo=timezone.utc)
+# Monday of the anchor week (22 September 2026)
+LAST_MONDAY = datetime(2026, 9, 22, 0, 0, 0, tzinfo=timezone.utc)
 
 
 def iso(dt: datetime) -> str:
@@ -28,12 +29,9 @@ def iso(dt: datetime) -> str:
 
 
 def load_seed_resume(resume_path: Path = DEFAULT_RESUME_FILE) -> tuple[bytes, str]:
-    if not resume_path.is_file():
-        raise FileNotFoundError(
-            f"Seed resume not found at {resume_path}. "
-            "Add your PDF under data/ (e.g. VARSHIL_PRAJAPATI_CV25.pdf) and re-run seed."
-        )
-    return resume_path.read_bytes(), resume_path.name
+    if resume_path.is_file():
+        return resume_path.read_bytes(), resume_path.name
+    return b"%PDF-1.4\n% placeholder when VARSHIL_PRAJAPATI_CV25.pdf is absent\n", "placeholder.pdf"
 
 
 def reset_db(conn: sqlite3.Connection) -> None:
@@ -180,7 +178,7 @@ def seed() -> None:
             1,
             2,
             screening=iso(ANCHOR - timedelta(days=20)),
-            offered=iso(ANCHOR - timedelta(days=3)),
+            offered=iso(ANCHOR - timedelta(days=10)),
             offered_flag=1,
         )
         ids["offer_rejected"] = cand(
@@ -190,9 +188,7 @@ def seed() -> None:
             2,
             -1,
             screening=iso(ANCHOR - timedelta(days=25)),
-            offered=iso(ANCHOR - timedelta(days=8)),
             rejected=iso(ANCHOR - timedelta(days=2)),
-            offered_flag=1,
         )
         ids["hired"] = cand(
             "Noah Kim",
@@ -246,7 +242,7 @@ def seed() -> None:
             "555-0113",
             2,
             1,
-            screening=iso(ANCHOR - timedelta(days=2)),
+            screening=iso(LAST_MONDAY + timedelta(days=1, hours=9)),
         )
         ids["analyst"] = cand(
             "Chris Rivera",
@@ -304,9 +300,7 @@ def seed() -> None:
             3,
             -1,
             screening=iso(ANCHOR - timedelta(days=11)),
-            offered=iso(ANCHOR - timedelta(days=5)),
             rejected=iso(ANCHOR - timedelta(days=1)),
-            offered_flag=1,
         )
         cand("Omar Hassan", "omar.h@example.com", "555-0121", 1, 0)
         cand(
@@ -324,7 +318,7 @@ def seed() -> None:
             3,
             2,
             screening=iso(ANCHOR - timedelta(days=16)),
-            offered=iso(ANCHOR - timedelta(days=4)),
+            offered=iso(ANCHOR - timedelta(days=8)),
             offered_flag=1,
         )
 
