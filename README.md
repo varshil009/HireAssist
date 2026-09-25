@@ -14,10 +14,9 @@ Mini hiring pipeline web app: manage candidates across stages, immutable history
 
 From the **repo root** (folder with `setup.py`, `run.py`, `backend/`, `frontend/`):
 
-1. Put **`data/hireassist.db`** in place if needed (included in the repo for eval; no seed required).
-2. **One-time setup:** `python setup.py` (or **`py -3.9 setup.py`** if your default Python is 3.14) — creates `backend/.venv`, installs Python + npm dependencies, copies `backend/.env.example` → `backend/.env` if missing.
-3. Edit **`backend/.env`** and set **`GEMINI_API`** (required for AI search).
-4. **Activate the venv** (still at repo root), then **run the app:**
+1. **One-time setup:** `python setup.py` (or **`py -3.9 setup.py`** if your default Python is 3.14) — creates `backend/.venv`, installs Python + npm dependencies, copies `backend/.env.example` → `backend/.env` if missing.
+2. Edit **`backend/.env`** and set **`GEMINI_API`** (required for AI search).
+3. **Activate the venv** (still at repo root), then **run the app:**
 
 ```powershell
 cd "D:\path\to\HireAssist"
