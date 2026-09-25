@@ -9,11 +9,12 @@ HireAssist/
 ├── main.py                  # Start API from repo root (python main.py)
 ├── backend/                 # FastAPI application
 │   ├── app/
-│   ├── scripts/seed.py      # Mock dataset loader
+│   ├── scripts/seed.py      # Optional: regenerate hireassist.db locally (not used in eval)
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/                # React + Vite + Tailwind UI
-├── data/                    # SQLite file (gitignored; created by seed)
+├── data/                    # hireassist.db (shipped for evaluators; see data/README.md)
+│   └── README.md
 ├── eval/                    # NL query eval set + runner
 ├── docs/                    # Architecture PDF, AI chat logs
 ├── project_structure.md     # This file
@@ -50,7 +51,7 @@ HireAssist/
 - **positions** — `position_code`, `title` (mock has ≥3 openings).
 - **candidates** — profile, `current_stage`, flags, `entered_*_at`, `rejected_at`.
 - **stage_events** — append-only audit trail.
-- **resumes** — one blob per candidate (replace on upload).
+- **resumes** — one blob per candidate (replace on upload). Downloads use `{CandidateName}_RESUME.pdf`.
 
 ## Frontend (`frontend/src`)
 
@@ -116,12 +117,14 @@ Copy [backend/.env.example](backend/.env.example) to `backend/.env` (settings ar
 - `GEMINI_MODEL` — optional (default `gemini-2.0-flash`)
 - Database defaults to `data/hireassist.db` at repo root.
 
-## Seed data
+## Database file (`data/hireassist.db`)
+
+Evaluation and normal runs use a **prebuilt SQLite file** at [data/hireassist.db](data/hireassist.db). See [data/README.md](data/README.md). Startup runs `CREATE IF NOT EXISTS` only; it does not reseed.
+
+Optional local regeneration (developers):
 
 ```bash
 backend\.venv\Scripts\python -m backend.scripts.seed
 ```
 
-Uses reference anchor **2026-09-25 UTC** (Monday of that week: **2026-09-22**). Time-based eval/reference SQL uses SQLite `datetime('now')` and should be run when system date aligns with the mock timeline.
-
-Requires **`data/VARSHIL_PRAJAPATI_CV25.pdf`** (or update `DEFAULT_RESUME_FILE` in `seed.py`). The same PDF bytes are stored in `resumes.file_blob` for **every** seeded candidate.
+Mock timeline is anchored to **2026-09-25 UTC** when regenerating. Time-based eval SQL uses SQLite `datetime('now')`.

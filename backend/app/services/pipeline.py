@@ -257,12 +257,19 @@ def upsert_resume(candidate_id: int, file_blob: bytes, filename: str | None) -> 
             )
 
 
-def get_resume(candidate_id: int) -> tuple[bytes, str | None] | None:
+def get_resume(candidate_id: int) -> tuple[bytes, str] | None:
+    from ..utils.resume_names import candidate_resume_filename
+
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT file_blob, filename FROM resumes WHERE candidate_id = ?",
+            """
+            SELECT r.file_blob, c.name
+            FROM resumes r
+            JOIN candidates c ON c.id = r.candidate_id
+            WHERE r.candidate_id = ?
+            """,
             (candidate_id,),
         ).fetchone()
     if not row:
         return None
-    return row["file_blob"], row["filename"]
+    return row["file_blob"], candidate_resume_filename(row["name"])

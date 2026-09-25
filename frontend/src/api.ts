@@ -118,6 +118,48 @@ export async function uploadResume(id: number, file: File): Promise<void> {
   if (!r.ok) throw new Error("Upload failed");
 }
 
+export function resumeDownloadFilename(candidateName: string): string {
+  const safe =
+    candidateName
+      .replace(/[^\w\s-]/g, "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .join("_") || "Candidate";
+  return `${safe}_RESUME.pdf`;
+}
+
+function filenameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const match = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(header);
+  return match ? decodeURIComponent(match[1].replace(/"/g, "")) : null;
+}
+
+export async function openCandidateResume(candidateId: number, candidateName: string): Promise<void> {
+  const r = await fetch(`${API}/api/candidates/${candidateId}/resume`);
+  if (!r.ok) {
+    throw new Error(r.status === 404 ? "No resume on file for this candidate." : "Could not load resume.");
+  }
+  const raw = await r.blob();
+  const type = r.headers.get("Content-Type")?.split(";")[0] || "application/pdf";
+  const blob = raw.type && raw.type !== "application/octet-stream" ? raw : new Blob([raw], { type });
+  const filename =
+    filenameFromContentDisposition(r.headers.get("Content-Disposition")) ||
+    resumeDownloadFilename(candidateName);
+  const url = URL.createObjectURL(blob);
+  const tab = window.open(url, "_blank", "noopener,noreferrer");
+  if (!tab) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+  window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+}
+
 export function resumeUrl(id: number): string {
   return `${API}/api/candidates/${id}/resume`;
 }

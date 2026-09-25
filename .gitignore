@@ -1,6 +1,5 @@
-data/hireassist.db
 *.db
-!data/*.pdf
+!data/hireassist.db
 .env
 __pycache__/
 *.pyc

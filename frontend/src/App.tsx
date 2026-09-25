@@ -7,9 +7,9 @@ import {
   fetchPipeline,
   fetchSuggest,
   fetchTimeline,
+  openCandidateResume,
   PipelineColumn,
   rejectCandidate,
-  resumeUrl,
   SearchResponse,
   StageEvent,
   SuggestItem,
@@ -231,14 +231,24 @@ function CandidateDetail({
                     }
                   }}
                 />
-                <a
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-                  href={resumeUrl(id)}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError(null);
+                    try {
+                      await openCandidateResume(id, candidate?.name ?? "Candidate");
+                    } catch (err) {
+                      setError(String(err));
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
                 >
                   View resume →
-                </a>
+                </button>
               </div>
             </div>
             <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-800">Stage history</h3>

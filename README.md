@@ -12,7 +12,16 @@ Mini hiring pipeline web app: manage candidates across stages, immutable history
 
 ## Quick start
 
-### 1. Backend
+### 1. Database
+
+Copy or build **`data/hireassist.db`** (included for evaluation). The app uses this file as-is; no seed step is required.
+
+```powershell
+# Optional: regenerate data locally (developers only)
+# backend\.venv\Scripts\python -m backend.scripts.seed
+```
+
+### 2. Backend
 
 ```powershell
 cd backend
@@ -21,11 +30,10 @@ py -3.9 -m venv .venv
 copy .env.example .env
 # Edit backend/.env: GEMINI_API and optional GEMINI_MODEL
 cd ..
-backend\.venv\Scripts\python -m backend.scripts.seed
 python main.py
 ```
 
-### 2. Frontend
+### 3. Frontend
 
 ```powershell
 cd frontend
@@ -35,7 +43,7 @@ npm run dev
 
 Open http://localhost:5173
 
-### 3. Eval (optional)
+### 4. Eval (optional)
 
 ```powershell
 # Validate expected result sets against reference SQL (no API key)

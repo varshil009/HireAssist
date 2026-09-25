@@ -55,12 +55,10 @@ def download_resume(candidate_id: int):
     res = pipeline_svc.get_resume(candidate_id)
     if not res:
         raise HTTPException(status_code=404, detail="Resume not found")
-    blob, filename = res
-    media = "application/octet-stream"
-    if filename and filename.lower().endswith(".pdf"):
-        media = "application/pdf"
+    blob, download_name = res
+    media = "application/pdf"
     return Response(
         content=blob,
         media_type=media,
-        headers={"Content-Disposition": f'inline; filename="{filename or "resume"}"'},
+        headers={"Content-Disposition": f'inline; filename="{download_name}"'},
     )
