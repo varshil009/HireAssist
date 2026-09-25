@@ -10,7 +10,10 @@ Or with uvicorn directly:
 from __future__ import annotations
 
 import sys
+import warnings
 from pathlib import Path
+
+warnings.filterwarnings("ignore")
 
 ROOT = Path(__file__).resolve().parent
 BACKEND = ROOT / "backend"
