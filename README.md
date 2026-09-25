@@ -14,10 +14,10 @@ Mini hiring pipeline web app: manage candidates across stages, immutable history
 
 ### 1. Database
 
-Copy or build **`data/hireassist.db`** (included for evaluation). The app uses this file as-is; no seed step is required.
+Copy or build **`data/hireassist.db`** . The app uses this file as-is; no seed step is required.
 
 ```powershell
-# Optional: regenerate data locally (developers only)
+# Optional: regenerate data locally 
 # backend\.venv\Scripts\python -m backend.scripts.seed
 ```
 
