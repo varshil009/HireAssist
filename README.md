@@ -12,51 +12,41 @@ Mini hiring pipeline web app: manage candidates across stages, immutable history
 
 ## Quick start
 
-### 1. Database
+From the **repo root** (folder with `setup.py`, `run.py`, `backend/`, `frontend/`):
 
-Copy or build **`data/hireassist.db`** . The app uses this file as-is; no seed step is required.
+1. Put **`data/hireassist.db`** in place if needed (included in the repo for eval; no seed required).
+2. **One-time setup:** `python setup.py` — creates `backend/.venv`, installs Python + npm dependencies, copies `backend/.env.example` → `backend/.env` if missing.
+3. Edit **`backend/.env`** and set **`GEMINI_API`** (required for AI search).
+4. **Activate the venv** (still at repo root), then **run the app:**
 
 ```powershell
-# Optional: regenerate data locally 
-# backend\.venv\Scripts\python -m backend.scripts.seed
+cd "D:\path\to\HireAssist"
+python setup.py
+# edit backend/.env
+backend\.venv\Scripts\activate
+python run.py
 ```
 
-### 2. Backend
+On macOS/Linux use `source backend/.venv/bin/activate` instead of `Scripts\activate`.
+
+Open http://localhost:5173 (API: http://127.0.0.1:8000). Press **Ctrl+C** in that terminal to stop both servers.
+
+Manual start (optional): `python main.py` in one terminal and `npm run dev` in `frontend/` in another — see [project_structure.md](project_structure.md).
+
+### Eval (optional)
+
+With the venv **activated** at repo root:
 
 ```powershell
-cd backend
-py -3.9 -m venv .venv
-.venv\Scripts\pip install -r requirements.txt
-copy .env.example .env
-# Edit backend/.env: GEMINI_API and optional GEMINI_MODEL
-cd ..
-python main.py
-```
-
-### 3. Frontend
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-Open http://localhost:5173
-
-### 4. Eval (optional)
-
-```powershell
-# Validate expected result sets against reference SQL (no API key)
-backend\.venv\Scripts\python eval\run_eval.py --offline
-
-# Live NL→SQL eval (needs GEMINI_API; respects GEMINI_RPM / retries in backend/.env)
-backend\.venv\Scripts\python eval\run_eval.py
+python eval\run_eval.py --offline
+python eval\run_eval.py
 ```
 
 **Eval metrics:** each query **passes** only on an **exact set match** of candidate IDs vs `expected_candidate_ids` in `eval/queries.json` (plus optional `expected_message_substring`). The summary **query accuracy** is passed/total. Per-query **set precision, recall, and F1** are printed for analysis but do not change pass/fail.
 
 ## Architecture summary
 
+- **End-to-end workflow diagram:** [Workflow.drawio.png](Workflow.drawio.png) (repo root).
 - **SQLite** stores positions, candidates (with `offered_flag` / `hired_flag`), append-only `stage_events`, and resume blobs.
 - **FastAPI** exposes pipeline CRUD, resume upload, fuzzy suggest, and AI search.
 - **Search:** realtime fuzzy matches while typing; **Search** runs a **two-attempt** Gemini prompt chain that generates read-only SQL. Second failure returns a fixed user message (no third attempt).

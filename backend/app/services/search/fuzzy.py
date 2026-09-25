@@ -49,8 +49,6 @@ def _name_match_score(query: str, full_name: str) -> float:
             scores.append(_score(token, last))
         scores.append(_score(token, full_name))
 
-    print(first, _score(token, first), last, _score(token, last), full_name)
-
     return max(scores)
 
 

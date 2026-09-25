@@ -8,7 +8,7 @@ Usage (from repo root):
 Metrics (live mode):
   - Primary pass criterion: **exact match** of predicted vs expected candidate id sets (sorted).
   - Reported **query accuracy** = passed_queries / total_queries (same as micro pass rate per question).
-  - Also prints **set precision / recall / F1** per query for analysis; pass/fail still uses exact set match.
+  - Also logs **set precision / recall / F1** per query for analysis; pass/fail still uses exact set match.
   - Queries with expected_message_substring also require that substring in the response message.
 
 Offline mode validates reference SQL against expected ids only (no LLM).
@@ -17,8 +17,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
@@ -91,12 +94,15 @@ def run_offline(queries: list[dict]) -> int:
         if ref:
             got = ids_from_reference_sql(ref)
             if got != expected:
-                print(f"FAIL {q['id']} reference mismatch expected={expected} got={got}")
+                logger.error(
+                    "FAIL %s reference mismatch expected=%s got=%s",
+                    q["id"],
+                    expected,
+                    got,
+                )
                 failures += 1
-            else:
-                print(f"OK   {q['id']} reference ids")
         else:
-            print(f"SKIP {q['id']} no reference_sql")
+            logger.warning("SKIP %s no reference_sql", q["id"])
     return failures
 
 
@@ -118,33 +124,54 @@ def run_live(queries: list[dict]) -> int:
         if sub:
             msg_ok = sub.lower() in resp.message.lower()
             if not msg_ok:
-                print(f"FAIL {q['id']} message expected substring '{sub}' in '{resp.message}'")
+                logger.error(
+                    "FAIL %s message expected substring %r in %r",
+                    q["id"],
+                    sub,
+                    resp.message,
+                )
                 failures += 1
             elif expected and not exact:
-                print(f"FAIL {q['id']} ids expected={expected} got={got} (P={p:.2f} R={r:.2f})")
+                logger.error(
+                    "FAIL %s ids expected=%s got=%s (P=%.2f R=%.2f)",
+                    q["id"],
+                    expected,
+                    got,
+                    p,
+                    r,
+                )
                 failures += 1
-            else:
-                print(f"OK   {q['id']} message+ids (P={p:.2f} R={r:.2f})")
             continue
         if not exact:
-            print(f"FAIL {q['id']} expected={expected} got={got} ok={resp.ok} (P={p:.2f} R={r:.2f})")
+            logger.error(
+                "FAIL %s expected=%s got=%s ok=%s (P=%.2f R=%.2f)",
+                q["id"],
+                expected,
+                got,
+                resp.ok,
+                p,
+                r,
+            )
             failures += 1
-        else:
-            print(f"OK   {q['id']} (P={p:.2f} R={r:.2f})")
     passed = len(queries) - failures
     acc = passed / len(queries) if queries else 0.0
-    print(
-        f"\nQuery accuracy (exact set match): {passed}/{len(queries)} = {acc:.1%}"
+    logger.warning(
+        "Query accuracy (exact set match): %s/%s = %.1f%%",
+        passed,
+        len(queries),
+        acc * 100,
     )
     if precisions:
-        print(
-            f"Mean set precision: {sum(precisions)/len(precisions):.3f} | "
-            f"Mean set recall: {sum(recalls)/len(recalls):.3f}"
+        logger.warning(
+            "Mean set precision: %.3f | Mean set recall: %.3f",
+            sum(precisions) / len(precisions),
+            sum(recalls) / len(recalls),
         )
     return failures
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser()
     parser.add_argument("--offline", action="store_true", help="Validate reference SQL only")
     args = parser.parse_args()
@@ -154,11 +181,13 @@ def main() -> None:
         failed = run_offline(queries)
     else:
         if not settings.gemini_api:
-            print("GEMINI_API not set in backend/.env; running --offline reference validation instead.")
+            logger.warning(
+                "GEMINI_API not set in backend/.env; running --offline reference validation instead."
+            )
             failed = run_offline(queries)
         else:
             failed = run_live(queries)
-    print(f"\n{len(queries) - failed}/{len(queries)} passed, {failed} failed")
+    logger.warning("%s/%s passed, %s failed", len(queries) - failed, len(queries), failed)
     sys.exit(1 if failed else 0)
 
 

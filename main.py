@@ -9,11 +9,13 @@ Or with uvicorn directly:
 """
 from __future__ import annotations
 
+import logging
 import sys
 import warnings
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
+logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 ROOT = Path(__file__).resolve().parent
 BACKEND = ROOT / "backend"
@@ -29,4 +31,5 @@ if __name__ == "__main__":
         port=8000,
         reload=True,
         reload_dirs=[str(BACKEND / "app")],
+        log_level="warning",
     )
