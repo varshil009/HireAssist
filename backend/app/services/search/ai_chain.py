@@ -6,6 +6,7 @@ import re
 
 from ...config import settings
 from ...models.schemas import SearchResponse, SuggestItem
+from .gemini_limits import generate_content_with_limits
 from .fuzzy import fuzzy_suggest
 from .search_display import present_search_table
 from .sql_guard import SQLGuardError, execute_readonly_query
@@ -85,7 +86,8 @@ def _call_llm(system: str, user: str) -> str:
 
     client = genai.Client(api_key=settings.gemini_api)
 
-    response = client.models.generate_content(
+    response = generate_content_with_limits(
+        client,
         model=settings.gemini_model,
         contents=user,
         config=types.GenerateContentConfig(

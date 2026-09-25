@@ -49,9 +49,11 @@ Open http://localhost:5173
 # Validate expected result sets against reference SQL (no API key)
 backend\.venv\Scripts\python eval\run_eval.py --offline
 
-# Live NL eval (requires GEMINI_API in backend/.env)
+# Live NL→SQL eval (needs GEMINI_API; respects GEMINI_RPM / retries in backend/.env)
 backend\.venv\Scripts\python eval\run_eval.py
 ```
+
+**Eval metrics:** each query **passes** only on an **exact set match** of candidate IDs vs `expected_candidate_ids` in `eval/queries.json` (plus optional `expected_message_substring`). The summary **query accuracy** is passed/total. Per-query **set precision, recall, and F1** are printed for analysis but do not change pass/fail.
 
 ## Architecture summary
 

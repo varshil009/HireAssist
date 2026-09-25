@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     database_path: str = str(ROOT_DIR / "data" / "hireassist.db")
     gemini_api: str | None = Field(default=None, validation_alias="GEMINI_API")
     gemini_model: str = Field(default="gemini-2.0-flash", validation_alias="GEMINI_MODEL")
+    gemini_rpm: int = Field(default=15, validation_alias="GEMINI_RPM")
+    gemini_max_retries: int = Field(default=3, validation_alias="GEMINI_MAX_RETRIES")
     sql_row_limit: int = 500
     fuzzy_min_score: int = 60
 

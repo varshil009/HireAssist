@@ -5,7 +5,13 @@ Usage (from repo root):
   backend\\.venv\\Scripts\\python eval\\run_eval.py           # live AI if GEMINI_API set in backend/.env
   backend\\.venv\\Scripts\\python eval\\run_eval.py --offline  # validate reference_sql + expected ids only
 
-Live mode calls POST /search logic via run_ai_search and compares candidate id sets extracted from result tables.
+Metrics (live mode):
+  - Primary pass criterion: **exact match** of predicted vs expected candidate id sets (sorted).
+  - Reported **query accuracy** = passed_queries / total_queries (same as micro pass rate per question).
+  - Also prints **set precision / recall / F1** per query for analysis; pass/fail still uses exact set match.
+  - Queries with expected_message_substring also require that substring in the response message.
+
+Offline mode validates reference SQL against expected ids only (no LLM).
 """
 from __future__ import annotations
 
@@ -53,6 +59,21 @@ def extract_candidate_ids(columns: list[str], rows: list[list]) -> list[int]:
     return sorted(set(ids))
 
 
+def set_prf(expected: list[int], got: list[int]) -> tuple[float, float, float]:
+    exp, pred = set(expected), set(got)
+    if not exp and not pred:
+        return 1.0, 1.0, 1.0
+    if not pred:
+        return 0.0, 0.0, 0.0
+    if not exp:
+        return 0.0, 1.0, 0.0
+    tp = len(exp & pred)
+    precision = tp / len(pred)
+    recall = tp / len(exp)
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+    return precision, recall, f1
+
+
 def ids_from_reference_sql(sql: str | None) -> list[int]:
     if not sql:
         return []
@@ -81,27 +102,45 @@ def run_offline(queries: list[dict]) -> int:
 
 def run_live(queries: list[dict]) -> int:
     failures = 0
+    precisions: list[float] = []
+    recalls: list[float] = []
     for q in queries:
         nl = q["natural_language"]
         expected = sorted(q.get("expected_candidate_ids") or [])
         sub = q.get("expected_message_substring")
         resp = run_ai_search(nl)
         got = extract_candidate_ids(resp.columns, resp.rows)
+        p, r, _f1 = set_prf(expected, got)
+        if expected or got:
+            precisions.append(p)
+            recalls.append(r)
+        exact = got == expected
         if sub:
-            if sub.lower() not in resp.message.lower():
+            msg_ok = sub.lower() in resp.message.lower()
+            if not msg_ok:
                 print(f"FAIL {q['id']} message expected substring '{sub}' in '{resp.message}'")
                 failures += 1
-            elif expected and got != expected:
-                print(f"FAIL {q['id']} ids expected={expected} got={got}")
+            elif expected and not exact:
+                print(f"FAIL {q['id']} ids expected={expected} got={got} (P={p:.2f} R={r:.2f})")
                 failures += 1
             else:
-                print(f"OK   {q['id']} message+ids")
+                print(f"OK   {q['id']} message+ids (P={p:.2f} R={r:.2f})")
             continue
-        if got != expected:
-            print(f"FAIL {q['id']} expected={expected} got={got} ok={resp.ok}")
+        if not exact:
+            print(f"FAIL {q['id']} expected={expected} got={got} ok={resp.ok} (P={p:.2f} R={r:.2f})")
             failures += 1
         else:
-            print(f"OK   {q['id']}")
+            print(f"OK   {q['id']} (P={p:.2f} R={r:.2f})")
+    passed = len(queries) - failures
+    acc = passed / len(queries) if queries else 0.0
+    print(
+        f"\nQuery accuracy (exact set match): {passed}/{len(queries)} = {acc:.1%}"
+    )
+    if precisions:
+        print(
+            f"Mean set precision: {sum(precisions)/len(precisions):.3f} | "
+            f"Mean set recall: {sum(recalls)/len(recalls):.3f}"
+        )
     return failures
 
 
