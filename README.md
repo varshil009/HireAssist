@@ -6,7 +6,7 @@ Mini hiring pipeline web app: manage candidates across stages, immutable history
 
 ## Prerequisites
 
-- Python **3.9+** (3.9 recommended on Windows; 3.14 may lack pydantic wheels)
+- Python **3.9–3.13** for the backend venv (**3.9–3.12 recommended** on Windows). Default **Python 3.14** often has no prebuilt `pydantic` wheels and will try to compile C/Rust (needs Visual Studio Build Tools). Use `py -3.9 setup.py` if `python` is 3.14.
 - Node.js 18+
 - Google Gemini API key (for AI search; set `GEMINI_API` in `backend/.env`)
 
@@ -15,13 +15,13 @@ Mini hiring pipeline web app: manage candidates across stages, immutable history
 From the **repo root** (folder with `setup.py`, `run.py`, `backend/`, `frontend/`):
 
 1. Put **`data/hireassist.db`** in place if needed (included in the repo for eval; no seed required).
-2. **One-time setup:** `python setup.py` — creates `backend/.venv`, installs Python + npm dependencies, copies `backend/.env.example` → `backend/.env` if missing.
+2. **One-time setup:** `python setup.py` (or **`py -3.9 setup.py`** if your default Python is 3.14) — creates `backend/.venv`, installs Python + npm dependencies, copies `backend/.env.example` → `backend/.env` if missing.
 3. Edit **`backend/.env`** and set **`GEMINI_API`** (required for AI search).
 4. **Activate the venv** (still at repo root), then **run the app:**
 
 ```powershell
 cd "D:\path\to\HireAssist"
-python setup.py
+py -3.9 setup.py          # use this if `python` is 3.14
 # edit backend/.env
 backend\.venv\Scripts\activate
 python run.py
