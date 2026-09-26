@@ -48,6 +48,18 @@ CREATE TABLE IF NOT EXISTS resumes (
 CREATE INDEX IF NOT EXISTS idx_candidates_stage ON candidates(current_stage);
 CREATE INDEX IF NOT EXISTS idx_candidates_position ON candidates(position_id);
 CREATE INDEX IF NOT EXISTS idx_stage_events_candidate ON stage_events(candidate_id);
+
+CREATE TRIGGER IF NOT EXISTS stage_events_immutable
+BEFORE UPDATE ON stage_events
+BEGIN
+    SELECT RAISE(ABORT, 'stage events are immutable');
+END;
+
+CREATE TRIGGER IF NOT EXISTS stage_events_no_delete
+BEFORE DELETE ON stage_events
+BEGIN
+    SELECT RAISE(ABORT, 'stage events cannot be deleted');
+END;
 """
 
 

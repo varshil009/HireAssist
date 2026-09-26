@@ -26,6 +26,12 @@ export type PipelineColumn = {
   candidates: Candidate[];
 };
 
+export type Position = {
+  id: number;
+  position_code: string;
+  title: string;
+};
+
 export type StageEvent = {
   id: number;
   candidate_id: number;
@@ -58,6 +64,37 @@ export type SearchResponse = {
 export async function fetchPipeline(): Promise<{ columns: PipelineColumn[] }> {
   const r = await fetch(`${API}/api/pipeline`);
   if (!r.ok) throw new Error("Failed to load pipeline");
+  return r.json();
+}
+
+export async function fetchPositions(): Promise<Position[]> {
+  const r = await fetch(`${API}/api/positions`);
+  if (!r.ok) throw new Error("Failed to load positions");
+  return r.json();
+}
+
+export async function createCandidate(body: {
+  name: string;
+  email: string;
+  phone?: string | null;
+  position_id: number;
+}): Promise<Candidate> {
+  const r = await fetch(`${API}/api/pipeline/candidates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    const detail = e.detail;
+    const msg =
+      typeof detail === "string"
+        ? detail
+        : Array.isArray(detail)
+          ? detail.map((x: { msg?: string }) => x.msg).filter(Boolean).join(", ")
+          : "Could not add candidate";
+    throw new Error(msg);
+  }
   return r.json();
 }
 

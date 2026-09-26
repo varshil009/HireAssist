@@ -1,0 +1,13 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/search'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "candidates in screening stage"
+    }

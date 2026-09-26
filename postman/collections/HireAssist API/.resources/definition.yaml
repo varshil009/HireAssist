@@ -1,0 +1,5 @@
+$kind: collection
+name: HireAssist API
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8000'

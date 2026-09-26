@@ -1,0 +1,7 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/api/search/suggest?q=John'
+order: 1000
+queryParams:
+  - key: q
+    value: John

@@ -1,0 +1,7 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/api/candidates/{{candidate_id}}'
+order: 1000
+pathVariables:
+  - key: candidate_id
+    value: '1'

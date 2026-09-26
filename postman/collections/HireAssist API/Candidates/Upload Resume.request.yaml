@@ -1,0 +1,13 @@
+$kind: http-request
+method: PUT
+url: '{{baseUrl}}/api/candidates/{{candidate_id}}/resume'
+order: 5000
+pathVariables:
+  - key: candidate_id
+    value: '1'
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ''

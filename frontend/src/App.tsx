@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   advanceCandidate,
   aiSearch,
   Candidate,
+  createCandidate,
   fetchCandidate,
   fetchPipeline,
+  fetchPositions,
   fetchSuggest,
   fetchTimeline,
   openCandidateResume,
   PipelineColumn,
+  Position,
   rejectCandidate,
   SearchResponse,
   StageEvent,
@@ -95,6 +98,182 @@ function ResultsTable({
             })}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function AddCandidateModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (id: number) => void;
+}) {
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [positionId, setPositionId] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    fetchPositions()
+      .then((list) => {
+        setPositions(list);
+        if (list.length > 0) setPositionId(String(list[0].id));
+      })
+      .catch((e) => setError(String(e)));
+  }, []);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const pid = Number(positionId);
+    if (!trimmedName || !trimmedEmail || !Number.isInteger(pid) || pid < 1) {
+      setError("Name, email, and position are required.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await createCandidate({
+        name: trimmedName,
+        email: trimmedEmail,
+        phone: phone.trim() || null,
+        position_id: pid,
+      });
+      if (resumeFile) {
+        await uploadResume(created.id, resumeFile);
+      }
+      onCreated(created.id);
+      onClose();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-white/20 bg-white p-6 shadow-2xl shadow-indigo-900/20"
+        onClick={(ev) => ev.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-candidate-title"
+      >
+        <div className="mb-4 flex items-start justify-between gap-2">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-indigo-600">New hire</p>
+            <h2 id="add-candidate-title" className="text-xl font-bold text-slate-900">
+              Add candidate
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">Starts in <strong>Applied</strong> with audit history.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-2 py-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            ✕
+          </button>
+        </div>
+        {error && <p className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+        <form className="space-y-4" onSubmit={(ev) => void submit(ev)}>
+          <div>
+            <label className="text-sm font-medium text-slate-700" htmlFor="add-name">
+              Name
+            </label>
+            <input
+              id="add-name"
+              required
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/20"
+              value={name}
+              onChange={(ev) => setName(ev.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700" htmlFor="add-email">
+              Email
+            </label>
+            <input
+              id="add-email"
+              type="email"
+              required
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/20"
+              value={email}
+              onChange={(ev) => setEmail(ev.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700" htmlFor="add-phone">
+              Phone <span className="font-normal text-slate-400">(optional)</span>
+            </label>
+            <input
+              id="add-phone"
+              type="tel"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/20"
+              value={phone}
+              onChange={(ev) => setPhone(ev.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700" htmlFor="add-position">
+              Position
+            </label>
+            <select
+              id="add-position"
+              required
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/20"
+              value={positionId}
+              onChange={(ev) => setPositionId(ev.target.value)}
+            >
+              {positions.length === 0 && <option value="">Loading positions…</option>}
+              {positions.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title} ({p.position_code})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700" htmlFor="add-resume">
+              Resume <span className="font-normal text-slate-400">(optional)</span>
+            </label>
+            <input
+              id="add-resume"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="mt-1 w-full text-xs file:mr-2 file:rounded-lg file:border-0 file:bg-indigo-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700"
+              onChange={(ev) => setResumeFile(ev.target.files?.[0] ?? null)}
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={busy || positions.length === 0}
+              className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 disabled:opacity-50"
+            >
+              {busy ? "Saving…" : "Add candidate"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -288,6 +467,7 @@ export default function App() {
   const [searchResult, setSearchResult] = useState<SearchResponse | null>(null);
   const [searchBusy, setSearchBusy] = useState(false);
   const [showFuzzy, setShowFuzzy] = useState(true);
+  const [showAddCandidate, setShowAddCandidate] = useState(false);
 
   const visibleColumns = useMemo(
     () => columns.filter((c) => c.stage !== -1).concat(columns.filter((c) => c.stage === -1)),
@@ -435,7 +615,16 @@ export default function App() {
         <p className="mb-4 rounded-lg bg-rose-50 px-4 py-2 text-rose-700 ring-1 ring-rose-100">{loadError}</p>
       )}
 
-      <h2 className="mb-4 text-lg font-semibold text-slate-800">Pipeline board</h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-slate-800">Pipeline board</h2>
+        <button
+          type="button"
+          onClick={() => setShowAddCandidate(true)}
+          className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:from-emerald-500 hover:to-teal-500"
+        >
+          + Add candidate
+        </button>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {visibleColumns.map((col) => (
           <div
@@ -470,6 +659,16 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {showAddCandidate && (
+        <AddCandidateModal
+          onClose={() => setShowAddCandidate(false)}
+          onCreated={async (id) => {
+            await reload();
+            setSelectedId(id);
+          }}
+        />
+      )}
 
       {selectedId != null && (
         <CandidateDetail id={selectedId} onClose={() => setSelectedId(null)} onUpdated={reload} />

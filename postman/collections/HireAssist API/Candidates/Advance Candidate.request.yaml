@@ -1,0 +1,7 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/candidates/{{candidate_id}}/advance'
+order: 3000
+pathVariables:
+  - key: candidate_id
+    value: '1'

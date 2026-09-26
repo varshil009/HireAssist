@@ -93,7 +93,7 @@ HireAssist/
 |-------|----------------------|--------|
 | `positions` | `id`, `position_code` (unique), `title` | Job openings referenced by candidates. |
 | `candidates` | identity, `position_id`, `current_stage`, flags, timestamps | Single source of truth for stage; see pipeline rules below. |
-| `stage_events` | `candidate_id`, `from_stage`, `to_stage`, `occurred_at` | Append-only audit; never updated. |
+| `stage_events` | `candidate_id`, `from_stage`, `to_stage`, `occurred_at` | Append-only audit; SQLite triggers block UPDATE/DELETE. |
 | `resumes` | `candidate_id` (unique), `file_blob`, `filename`, `uploaded_at` | One row per candidate; PDF bytes in DB. |
 
 SQLite also maintains internal **`sqlite_sequence`** for `AUTOINCREMENT` ids.
